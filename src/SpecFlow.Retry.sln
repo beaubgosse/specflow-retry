@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecFlow.Retry", "SpecFlow.Retry\SpecFlow.Retry.csproj", "{09F75CED-6C8A-457B-AD23-9DF3384FE5B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpecFlow.Retry", "SpecFlow.Retry\SpecFlow.Retry.csproj", "{09F75CED-6C8A-457B-AD23-9DF3384FE5B3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecFlow.Retry.MsTest.Sample", "SpecFlow.Retry.MsTest.Sample\SpecFlow.Retry.MsTest.Sample.csproj", "{AD8D3C92-19C5-48A7-9D7A-0D0460509C67}"
 EndProject

@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using Gherkin.Ast;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Generator;
+using TechTalk.SpecFlow.Generator.CodeDom;
 using TechTalk.SpecFlow.Generator.UnitTestConverter;
 using TechTalk.SpecFlow.Generator.UnitTestProvider;
 using TechTalk.SpecFlow.Parser;
@@ -83,9 +84,9 @@ namespace SpecFlow.Retry
                 CreateMethod(testClass),
                 CreateMethod(testClass),
                 CreateMethod(testClass),
-                HasFeatureBackground(document.SpecFlowFeature) ? CreateMethod(testClass) : null,
-                generateRowTests: _testGeneratorProvider.GetTraits().HasFlag(UnitTestGeneratorTraits.RowTests) &&
-                                  _specFlowConfiguration.AllowRowTests);
+                HasFeatureBackground(document.SpecFlowFeature) ? CreateMethod(testClass) : null, 
+                CreateMethod(testClass),
+                generateRowTests: _testGeneratorProvider.GetTraits().HasFlag(UnitTestGeneratorTraits.RowTests));
         }
 
         private CodeNamespace CreateNamespace(string targetNamespace)
@@ -118,19 +119,19 @@ namespace SpecFlow.Retry
             SetupTestInitializeMethod(generationContext);
             SetupTestCleanupMethod(generationContext);
 
-            foreach (var scenarioDefinition in feature.ScenarioDefinitions)
+            foreach (var scenario in feature.ScenarioDefinitions)
             {
-                if (string.IsNullOrEmpty(scenarioDefinition.Name))
+                if (string.IsNullOrEmpty(scenario.Name))
                     throw new TestGeneratorException("The scenario must have a title specified.");
 
-                var scenarioOutline = scenarioDefinition as ScenarioOutline;
+                var scenarioOutline = scenario as ScenarioOutline;
 
                 if (scenarioOutline != null)
                 {
                     GenerateScenarioOutlineTest(generationContext, scenarioOutline);
                 }
                 else
-                    GenerateTest(generationContext, (Scenario) scenarioDefinition);
+                    GenerateTest(generationContext, (Scenario) scenario);
             }
 
             //before return the generated code, call generate provider's method in case the provider want to customerize the generated code            
@@ -535,7 +536,7 @@ namespace SpecFlow.Retry
         }
 
         private CodeMemberMethod CreateTestMethod(TestClassGenerationContext generationContext,
-            ScenarioDefinition scenario, IEnumerable<Tag> additionalTags, string variantName = null,
+            Scenario scenario, IEnumerable<Tag> additionalTags, string variantName = null,
             string exampleSetIdentifier = null)
         {
             CodeMemberMethod testMethod = CreateMethod(generationContext.TestClass);
@@ -713,7 +714,7 @@ namespace SpecFlow.Retry
             return method;
         }
 
-        private void GenerateTestBody(TestClassGenerationContext generationContext, ScenarioDefinition scenario,
+        private void GenerateTestBody(TestClassGenerationContext generationContext, Scenario scenario,
             CodeMemberMethod testMethod, CodeExpression additionalTagsExpression = null,
             ParameterSubstitution paramToIdentifier = null)
         {
@@ -723,7 +724,7 @@ namespace SpecFlow.Retry
 
             if (additionalTagsExpression == null)
                 tagsExpression = GetStringArrayExpression(scenario.GetTags());
-            else if (!scenario.HasTags())
+            else if (scenario.Tags.Count() != 0)
                 tagsExpression = additionalTagsExpression;
             else
             {
@@ -790,16 +791,16 @@ namespace SpecFlow.Retry
         }
 
         private void SetupTestMethod(TestClassGenerationContext generationContext, CodeMemberMethod testMethod,
-            ScenarioDefinition scenarioDefinition, IEnumerable<Tag> additionalTags, string variantName,
+            Scenario scenario, IEnumerable<Tag> additionalTags, string variantName,
             string exampleSetIdentifier, bool rowTest = false)
         {
             testMethod.Attributes = MemberAttributes.Public;
-            testMethod.Name = GetTestMethodName(scenarioDefinition, variantName, exampleSetIdentifier);
+            testMethod.Name = GetTestMethodName(scenario, variantName, exampleSetIdentifier);
 
-            var friendlyTestName = scenarioDefinition.Name;
+            var friendlyTestName = scenario.Name;
 
             if (variantName != null)
-                friendlyTestName = string.Format("{0}: {1}", scenarioDefinition.Name, variantName);
+                friendlyTestName = string.Format("{0}: {1}", scenario.Name, variantName);
 
             if (rowTest)
                 _testGeneratorProvider.SetRowTest(generationContext, testMethod, friendlyTestName);
@@ -808,13 +809,13 @@ namespace SpecFlow.Retry
 
             List<string> scenarioCategories;
             _decoratorRegistry.DecorateTestMethod(generationContext, testMethod,
-                ConcatTags(scenarioDefinition.GetTags(), additionalTags), out scenarioCategories);
+                ConcatTags(scenario.GetTags(), additionalTags), out scenarioCategories);
 
             if (scenarioCategories.Any())
                 _testGeneratorProvider.SetTestMethodCategories(generationContext, testMethod, scenarioCategories);
         }
 
-        private static string GetTestMethodName(ScenarioDefinition scenario, string variantName,
+        private static string GetTestMethodName(Scenario scenario, string variantName,
             string exampleSetIdentifier)
         {
             var methodName = string.Format(TEST_NAME_FORMAT, scenario.Name.ToIdentifier());
@@ -977,9 +978,9 @@ namespace SpecFlow.Retry
             AddLineDirective(statements, background.Location);
         }
 
-        private void AddLineDirective(CodeStatementCollection statements, ScenarioDefinition scenarioDefinition)
+        private void AddLineDirective(CodeStatementCollection statements, Scenario scenario)
         {
-            AddLineDirective(statements, scenarioDefinition.Location);
+            AddLineDirective(statements, scenario.Location);
         }
 
         private void AddLineDirective(CodeStatementCollection statements, Step step)
